@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import abi from "./ChatContractAbi.json";
 
 export const CONTRACT_ADDRESS =
-  "0x7a37eCd53B1060F6cb4b5CeDa7B15caB2e2b6A41";
+  "0x.....";
 
 
 
