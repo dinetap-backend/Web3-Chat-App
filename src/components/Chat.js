@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import abi from "../ChatContractAbi.json";
 import ipfs from "../ipfs";
@@ -9,7 +9,7 @@ export default function Chat({ provider, encryptionKey, myAddress }) {
   const [to, setTo] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [users] = useState([]);
   const [status, setStatus] = useState("");
 
   // SEND MESSAGE 
@@ -79,8 +79,8 @@ export default function Chat({ provider, encryptionKey, myAddress }) {
       const tx = await contract.sendMessage(to, path);
       setStatus(`Transaction sent! Hash: ${tx.hash.substring(0, 10)}...`);
 
-      // Wait for confirmation
-      const receipt = await tx.wait();
+      // Wait for confirmation 
+      await tx.wait();
       setStatus("Message sent successfully!");
 
       // Clear input
@@ -106,8 +106,8 @@ export default function Chat({ provider, encryptionKey, myAddress }) {
     }
   };
 
-  // Fetch messages
-  const fetchMessages = async () => {
+  // Fetch messages - wrapped in useCallback
+  const fetchMessages = useCallback(async () => {
     if (!provider || !encryptionKey || !myAddress) {
       return;
     }
@@ -126,20 +126,24 @@ export default function Chat({ provider, encryptionKey, myAddress }) {
         const msg = await readContract.messages(myAddress, i);
         
         try {
+          // FIXED: Added missing .cipher property access
+          const data = JSON.parse(msg.cipher || "{}");
           const decrypted = CryptoJS.AES.decrypt(
-            msg.cipher,
+            data.cipher || "",
             encryptionKey
           ).toString(CryptoJS.enc.Utf8);
           
           temp.push({
             from: msg.from,
-            text: decrypted,
-            timestamp: msg.timestamp || Date.now(),
+            text: decrypted || "[Empty message]",
+            timestamp: data.timestamp || msg.timestamp || Date.now(),
           });
         } catch (decryptErr) {
+          console.error("Decryption error:", decryptErr);
           temp.push({
             from: msg.from,
             text: "[Unable to decrypt]",
+            timestamp: msg.timestamp || Date.now(),
           });
         }
       }
@@ -149,7 +153,7 @@ export default function Chat({ provider, encryptionKey, myAddress }) {
     } catch (err) {
       console.error("Fetch messages error:", err);
     }
-  };
+  }, [provider, encryptionKey, myAddress]); 
 
   // POLL MESSAGES
   useEffect(() => {
@@ -166,7 +170,7 @@ export default function Chat({ provider, encryptionKey, myAddress }) {
     return () => {
       clearInterval(interval);
     };
-  }, [provider, encryptionKey, myAddress]);
+  }, [provider, encryptionKey, myAddress, fetchMessages]); 
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
