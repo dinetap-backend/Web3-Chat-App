@@ -4,6 +4,9 @@ A **decentralized, end-to-end encrypted chat application** built with **React.js
 Messages are encrypted on the client, stored on IPFS, and referenced on-chain.
 
 ---
+## 🌍 Live Demo
+
+🔗 https://web3-chat-app-one.vercel.app/
 
 ## 🚀 Features
 
@@ -70,6 +73,7 @@ Runs on: http://localhost:3000
 🔧 Configuration
 
 Update contract address:
+
 
 export const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS";
 
